@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <IRremote.hpp>
-#define IR_SEND_PIN 19
-#define line 21
+#define IR_SEND_PIN 3
+#define line 4
 void setup() {
   Serial.begin(9600);
   IrSender.begin(IR_SEND_PIN);
