@@ -1,0 +1,125 @@
+Phát loa:
+float sinVal;
+int toneVal;
+ALARM = 13
+
+pinMode(ALARM, OUTPUT);
+
+for (int x = 0; x<180; x++)
+{
+  sinVal = sin(x * (3.1412/180));
+  toneVal = 2000 + (int(sinVal * 1000));
+  tone(ALARM, toneVal);
+  delay(2);
+}
+noTone(ALARM)
+
+
+DHT 11:
+#include "DHT.h"
+#define DHTPin 4
+#define DHTType DHT11
+DHT HT(DHTPin, DHTType);
+
+HT.begin();
+
+humidity = HT.readHumidity();
+temperatureC = HT.readTemperature();
+temperatureF = HT.readTemperature(true);
+
+
+Cảm biến siêu âm:
+const int triPin = 5;
+const int echoPin = 3;
+
+pinMode(triPin, OUTPUT);
+pinMode(echoPin, INPUT);
+
+digitalWrite(triPin, LOW);
+delayMicroseconds(2);
+digitalWrite(triPin, HIGH);
+delayMicroseconds(10);
+digitalWrite(triPin, LOW);
+duration = pulseIn(echoPin, HIGH);
+distance = duration*0.034/2.0; # cm
+
+
+Joystick:
+int JoyStick_X = A0;
+int JoyStick_Y = A1;
+int button = 5;
+
+pinMode(button, INPUT_PULLUP);
+
+x = analogRead(JoyStick_X);
+y = analogRead(JoyStick_Y);
+z = digitalRead(button);
+z == 0 # press
+
+
+Cảm biến nhiệt độ tương tự LM35:
+LM35 = 0
+
+val = analogRead(LM35)
+tmprVal = val * (5/10.24) # oC
+
+
+Cảm biến quang:
+int light = 0;
+
+val = analogRead(light);
+val < 700 # ánh sáng mạnh thì quang trở giảm
+
+
+Cảm biến gas:
+int gasPin = 0;
+
+val = analogRead(gasPin);
+val > 200 # có khí gas
+
+
+Cảm biến hồng ngoại:
+int outHN = 7;
+
+pinMode(outHN, INPUT);
+
+int value = digitalRead(outHN); # HIGH: Something moved
+
+
+Cảm biến dò line:
+int line = 4;
+
+pinMode(line, INPUT);
+
+value = digitalRead(line); # 0: black or 1: white
+
+
+Serial:
+if (Serial.available() > 0) 
+{
+  setupLed = Serial.readString(); 
+  setupLed.trim();
+}
+char c = Serial.read() # đọc từng byte
+
+
+Interrupt:
+4 mode: LOW, CHANGE, RISING và FALLING 
+
+attachInterrupt(0, f1, FALLING); # chân 2
+attachInterrupt(1, f2, FALLING); # chân 3
+
+
+Biến trở:
+pin = 11;
+led = 13;
+
+pinMode(11, OUTPUT);
+
+value = analogRead(pin);
+value /= 4;
+analogWrite(led, value);
+
+
+Chân xung: 3 5 6 9 10 11
+Bài nào cũng có delay ở cuối
