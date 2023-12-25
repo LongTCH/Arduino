@@ -33,20 +33,33 @@ void setup() {
   Serial.begin(9600);
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
-  if(!SPIFFS.begin(true)){
-    Serial.println("An Error has occurred while mounting SPIFFS");
-    return;
-  }
+  ledcSetup(0, 5000, 8);
+  ledcSetup(1, 5000, 8);
+  ledcAttachPin(IN1, 0);
+  ledcAttachPin(IN2, 1);
+  // ledcAttachPin(IN2, 0);
+  // if(!SPIFFS.begin(true)){
+  //   Serial.println("An Error has occurred while mounting SPIFFS");
+  //   return;
+  // }
 
-  WiFi.softAP(ssid, password);
-  IPAddress IP = WiFi.softAPIP();
+  // WiFi.softAP(ssid, password);
+  // IPAddress IP = WiFi.softAPIP();
   // WiFi.softAPConfig(local_ip, gateway, subnet);
 
-  Serial.print("AP IP address: ");
-  Serial.println(IP);
+  // Serial.print("AP IP address: ");
+  // Serial.println(IP);
 
-  Serial.print("Local IP address: ");
-  Serial.println(WiFi.localIP());
+  // Serial.print("Local IP address: ");
+  // Serial.println(WiFi.localIP());
+
+  WiFi.begin(ssid, password);
+  Serial.println("Kết nối đến WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(1000);
+  }
+  Serial.println("Đã kết nối thành công!");
 
   // Routes
   server.on("/", handle_index);
@@ -75,7 +88,7 @@ void setup() {
 
 String get_html(const char* path) {
   File file = SPIFFS.open(path, "r");
-  if(!file) {
+  if (!file) {
     Serial.println("Could not open file for reading");
     Serial.print("File: ");
     Serial.println(path);
@@ -91,11 +104,11 @@ void handle_index() {
 }
 
 void handle_led() {
-  if(server.hasArg("status")) {
+  if (server.hasArg("status")) {
     String status = server.arg("status");
-    if(status == "on") {
+    if (status == "on") {
       digitalWrite(LED, HIGH);
-    } else if(status == "off") {
+    } else if (status == "off") {
       digitalWrite(LED, LOW);
     }
     server.send(200, "application/json", "{\"message\": \"OK\"}");
@@ -126,14 +139,20 @@ void handle_line() {
 // }
 
 void handle_dc() {
-  if(server.hasArg("direction")) {
+  if (server.hasArg("direction")) {
     int direction = server.arg("direction").toInt();
-    if(direction == 1) {
-      digitalWrite(IN1, LOW);
-      digitalWrite(IN2, HIGH);
-    }  else {
-      digitalWrite(IN1, HIGH);
-      digitalWrite(IN2, LOW);
+    if (direction == 1) {
+      ledcWrite(0, LOW);
+      for (int i = 0; i <= 255; i++) {
+        ledcWrite(1, i);
+        delay(10);
+      }
+    } else {
+      for (int i = 0; i <= 255; i++) {
+        ledcWrite(1, i);
+        delay(10);
+      }
+      ledcWrite(1, LOW);
     }
     server.send(200, "text/plain", "OK");
   } else {
