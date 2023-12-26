@@ -12,6 +12,9 @@
 
     <h2>Thông tin cảm biến quang tương tự</h2>
     <p id="light"></p>
+
+    <h2>Thông tin cảm biến nhiệt độ độ ẩm</h2>
+    <p id="temperature"></p>
     <p id="humidity"></p>
 
     <h2>Thông tin cảm biến dò line</h2>
@@ -24,129 +27,112 @@
     <p id="gas"></p>
 
     <h2>Điều khiển Servo</h2>
-    <input type="number" id="servoAngle" placeholder="Nhập góc (0-90)" />
+    <input type="number" id="servoAngle" placeholder="Nhập góc (0-180)" />
     <button onclick="controlServo()">Điều khiển Servo</button>
 
+    <h2>Điều khiển Động cơ bước</h2>
+    <label for="step_direction">Chọn chiều:</label>
+    <select id="step_direction">
+      <option value="0" selected>0</option>
+      <option value="1">1</option>
+    </select>
+    <input type="number" id="stepAngle" placeholder="Nhập góc" />
+    <button onclick="controlStepMotor()">Điều khiển động cơ bước</button>
+    <p id="stepmotor_mess"></p>
+
     <h2>Điều khiển DC</h2>
-    <button onclick="controlDC()">Đổi chiều</button>
+    <p id="dc_mess"></p>
+    <button onclick="controlDC(1, true)">Đổi chiều</button>
+    <button onclick="controlDC(1)">Nhanh dần</button>
+    <button onclick="controlDC(0)">Chậm dần</button>
 
     <script>
-      var espServer = 'http://192.168.4.1'
+      var espServer = 'http://192.168.43.206'
       var dc = 0
-      function turnOn() {
-        fetch(espServer + '/led=on')
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok')
-            }
-            console.log('LED turned on')
-          })
-          .catch((error) => console.error('Error:', error))
-      }
-
-      function turnOff() {
-        fetch(espServer + '/led=off')
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok')
-            }
-            console.log('LED turned off')
-          })
-          .catch((error) => console.error('Error:', error))
-      }
-
-      function getTemperature() {
-        fetch(espServer + '/dht/temp')
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok')
-            }
-            return response.text()
-          })
+      function getHumidityTemperature() {
+        fetch(espServer + '/dht')
+          .then((response) => response.json())
           .then((data) => {
             document.getElementById('temperature').innerText =
-              'Nhiệt độ: ' + data + ' °C'
+              'Nhiệt độ: ' + data['temperature'] + ' °C'
+            document.getElementById('humidity').innerText =
+              'Độ ẩm: ' + data['humidity'] + ' %'
           })
-          .catch((error) => console.error('Error:', error))
       }
 
-      function getHumidity() {
-        fetch(espServer + '/dht/hum')
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok')
-            }
-            return response.text()
-          })
-          .then((data) => {
-            document.getElementById('humidity').innerText =
-              'Độ ẩm: ' + data + ' %'
-          })
-          .catch((error) => console.error('Error:', error))
-      }
       function getLight() {
         fetch(espServer + '/light')
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok')
-            }
-            return response.text()
-          })
+          .then((response) => response.json())
           .then((data) => {
-            document.getElementById('light').innerText = 'Ánh sáng: ' + data
+            document.getElementById('light').innerText =
+              'Ánh sáng: ' + data['value']
           })
-          .catch((error) => console.error('Error:', error))
       }
       function getLine() {
         fetch(espServer + '/line')
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok')
-            }
-            return response.text()
-          })
+          .then((response) => response.json())
           .then((data) => {
-            document.getElementById('line').innerText = 'Dò line: ' + data
+            document.getElementById('line').innerText =
+              'Dò line: ' + data['value']
           })
-          .catch((error) => console.error('Error:', error))
+      }
+      function getDistance() {
+        fetch(espServer + '/distance')
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById('distance').innerText =
+              'Siêu âm: ' + data['value'] + 'cm'
+          })
       }
       function getGas() {
         fetch(espServer + '/gas')
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok')
-            }
-            return response.text()
-          })
+          .then((response) => response.json())
           .then((data) => {
-            document.getElementById('line').innerText = 'Dò line: ' + data
+            document.getElementById('gas').innerText =
+              'Khí gas: ' + data['value']
           })
-          .catch((error) => console.error('Error:', error))
       }
 
       function updateData() {
-        getLine()
+        getDistance()
       }
 
       function controlServo() {
         const angle = document.getElementById('servoAngle').value
-        fetch(espServer + `/servo?angle=${angle * 2}`)
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok')
-            }
-            console.log('Servo controlled')
-          })
-          .catch((error) => console.error('Error:', error))
+        fetch(espServer + `/servo?angle=${angle}`).then((response) => {
+          document.getElementById('stepmotor_mess').innerText = 'Đổi chiều'
+          setTimeout(
+            () => (document.getElementById('stepmotor_mess').innerText = ''),
+            1000
+          )
+        })
       }
 
-      function controlDC() {
-        dc = !dc
-        fetch(espServer + `/dc?direction=${+dc}`)
+      function controlStepMotor() {
+        const angle = document.getElementById('stepAngle').value
+        const direction = document.getElementById('step_direction').value
+        fetch(
+          espServer + `/stepmotor?direction=${direction}&angle=${angle}`
+        ).then((response) => response.json())
+      }
+
+      function controlDC(faster, reverse = false) {
+        let mess = `Đang ${faster ? 'tăng tốc' : 'giảm tốc'}. Vui lòng đợi...`
+        if (reverse) {
+          mess = 'Đổi chiều. ' + mess
+          dc = !dc
+        }
+        document.getElementById('dc_mess').innerText = mess
+        fetch(espServer + `/dc?direction=${+dc}&faster=${faster}`)
           .then((response) => {
             if (!response.ok) {
               throw new Error('Network response was not ok')
             }
+            document.getElementById('dc_mess').innerText = 'Xong'
+            setTimeout(
+              () => (document.getElementById('dc_mess').innerText = ''),
+              1000
+            )
           })
           .catch((error) => console.error('Error:', error))
       }

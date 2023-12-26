@@ -30,7 +30,7 @@ void loop() {
   if (IrReceiver.decode()) {
     uint16_t address = IrReceiver.decodedIRData.address;
     // Serial.print("address: ");
-    // Serial.println(address);
+    Serial.println(address);
     if (address == 0x3A13) {
       uint8_t command = IrReceiver.decodedIRData.command;
       Serial.print("command: ");

@@ -18,7 +18,7 @@ void setup(){
 }
 
 void loop(){
-  delay(200);
+  delay(2000);
   humidity = HT.readHumidity();
   temperatureC = HT.readTemperature();
   temperatureF = HT.readTemperature(true);
