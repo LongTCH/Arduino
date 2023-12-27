@@ -45,9 +45,10 @@
     <button onclick="controlDC(1, true)">Đổi chiều</button>
     <button onclick="controlDC(1)">Nhanh dần</button>
     <button onclick="controlDC(0)">Chậm dần</button>
+    <button onclick="stopDC()">Dừng</button>
 
     <script>
-      var espServer = 'http://192.168.43.206'
+      var espServer = 'http://192.168.137.16'
       var dc = 0
       function getHumidityTemperature() {
         fetch(espServer + '/dht')
@@ -94,7 +95,7 @@
       }
 
       function updateData() {
-        getDistance()
+        getGas()
       }
 
       function controlServo() {
@@ -114,6 +115,16 @@
         fetch(
           espServer + `/stepmotor?direction=${direction}&angle=${angle}`
         ).then((response) => response.json())
+      }
+
+      function stopDC() {
+        fetch(espServer + `/dc?stop=1`)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok')
+            }
+          })
+          .catch((error) => console.error('Error:', error))
       }
 
       function controlDC(faster, reverse = false) {

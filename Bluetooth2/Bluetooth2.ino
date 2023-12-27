@@ -40,10 +40,10 @@ void dc() {
 }
 void loop() {
   // put your main code here, to run repeatedly:
-  // if (BTSerial.available()) {
-  //   // Serial.write(BTSerial.read());
-  //   c = BTSerial.readStringUntil('\n');
-  //   Serial.println(c + prev);
+  if (BTSerial.available()) {
+    // Serial.write(BTSerial.read());
+    c = BTSerial.readStringUntil('\n');
+    Serial.println(c + prev);}
   //   if (c.toInt() == 1) {
   //     digitalWrite(IN2, 0);
   //     digitalWrite(IN1, 1);
@@ -64,19 +64,19 @@ void loop() {
   // }
   // if (c.toInt() == 1) {
   // Nhanh dan
-  digitalWrite(IN2, 0);
-  // digitalWrite(IN1, 1);
-  for (int i = 0; i <= 255; i -= 10) {
-    analogWrite(IN1, i);
-    delay(500);
-  }
-  delay(2000);
-  // Cham dan
-  for (int i = 255; i >= 0; i -= 10) {
-    analogWrite(IN1, i);
-    delay(500);
-  }
-  delay(2000);
+  // digitalWrite(IN2, 0);
+  // // digitalWrite(IN1, 1);
+  // for (int i = 0; i <= 255; i -= 10) {
+  //   analogWrite(IN1, i);
+  //   delay(500);
+  // }
+  // delay(2000);
+  // // Cham dan
+  // for (int i = 255; i >= 0; i -= 10) {
+  //   analogWrite(IN1, i);
+  //   delay(500);
+  // }
+  // delay(2000);
   // digitalWrite(IN1, 0);
   // delay(2000);
   // digitalWrite(IN1, 0);

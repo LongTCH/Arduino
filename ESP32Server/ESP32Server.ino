@@ -21,7 +21,7 @@ WebServer server(80);
 #define LINE_PIN 18
 #define SERVO_PIN 19
 #define LIGHT_PIN 13
-#define GAS_PIN 14
+#define GAS_PIN 34
 
 #define IN1 33
 #define IN2 32
@@ -46,15 +46,15 @@ WebServer server(80);
 
 
 // Defines the number of steps per rotation
-const int stepsPerRevolution = 2048;
+// const int stepsPerRevolution = 2048;
 // Creates an instance of stepper class
 // Pins entered in sequence IN1-IN3-IN2-IN4 for proper step sequence
-Stepper myStepper = Stepper(stepsPerRevolution, STEP_IN1, STEP_IN3, STEP_IN2, STEP_IN4);
-int step_degree = 0;
-int degreeToSteps(int degree, int STEPS = stepsPerRevolution) {
-  if (degree == 0) return 0;
-  return STEPS / (360 / degree);
-}
+// Stepper myStepper = Stepper(stepsPerRevolution, STEP_IN1, STEP_IN3, STEP_IN2, STEP_IN4);
+// int step_degree = 0;
+// int degreeToSteps(int degree, int STEPS = stepsPerRevolution) {
+//   if (degree == 0) return 0;
+//   return STEPS / (360 / degree);
+// }
 
 // DHT dht(DHT_PIN, DHT_TYPE);
 
@@ -77,18 +77,19 @@ void setup() {
   // analogReadResolution(10);
 
   // For DC
-  // ledcSetup(IN1_CHANNEL, FREQUENCY, RESOLUTION);
-  // ledcSetup(IN2_CHANNEL, FREQUENCY, RESOLUTION);
-  // ledcAttachPin(IN1, IN1_CHANNEL);
-  // ledcAttachPin(IN2, IN2_CHANNEL);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+
+  // For Gas
+  // pinMode(GAS_PIN, INPUT);
 
   // For Servo
   // servo.attach(SERVO_PIN);
   // xTaskCreate(servoSpin, "servoSpin", 1024, NULL, 1, NULL);
 
   // For StepMotor
-  xTaskCreate(stepSpin, "stepSpin", 1024, NULL, 1, NULL);
-  myStepper.setSpeed(STEP_SPEED);
+  // xTaskCreate(stepSpin, "stepSpin", 1024, NULL, 1, NULL);
+  // myStepper.setSpeed(STEP_SPEED);
 
 
   if (!SPIFFS.begin(true)) {
@@ -123,9 +124,11 @@ void setup() {
   // server.on("/led", handle_led);
   // server.on("/dht", handle_dht);
   // server.on("/servo", handle_servo);
-  server.on("/stepmotor", handle_stepmotor);
+  // server.on("/stepmotor", handle_stepmotor);
   // server.on("/line", handle_line);
-  // server.on("/dc", handle_dc);
+  server.on("/light", handle_light);
+  server.on("/gas", handle_gas);
+  server.on("/dc", handle_dc);
   // server.on("/distance", handle_sieuam);
   // server.on("/joy", handle_joy);
   server.enableCORS();
@@ -141,12 +144,12 @@ void setup() {
 //   }
 // }
 
-void stepSpin(void *args) {
-  while (1) {
-    myStepper.step(degreeToSteps(step_degree));
-    delay(1000);
-  }
-}
+// void stepSpin(void *args) {
+//   while (1) {
+//     myStepper.step(degreeToSteps(step_degree));
+//     delay(1000);
+//   }
+// }
 
 String get_html(const char *path) {
   File file = SPIFFS.open(path, "r");
@@ -213,26 +216,33 @@ void handle_sieuam() {
 
 void rotateDC(int HIGH_CHANNEL, int LOW_CHANNEL, int faster) {
   if (faster) {
-    ledcWrite(LOW_CHANNEL, LOW);
-    for (int i = 150; i <= 255; i += 5) {
-      ledcWrite(HIGH_CHANNEL, i);
+    analogWrite(LOW_CHANNEL, LOW);
+    for (int i = 100; i <= 255; i += 10) {
+      analogWrite(HIGH_CHANNEL, i);
       delay(500);
     }
   } else {
-    ledcWrite(LOW_CHANNEL, LOW);
-    for (int i = 255; i >= 150; i -= 5) {
-      ledcWrite(HIGH_CHANNEL, i);
+    analogWrite(LOW_CHANNEL, LOW);
+    for (int i = 255; i >= 100; i -= 10) {
+      analogWrite(HIGH_CHANNEL, i);
       delay(500);
     }
   }
 }
+
 void handle_dc() {
+  if (server.hasArg("stop")){
+    analogWrite(IN1, LOW);
+    analogWrite(IN2, LOW);
+    server.send(200, "text/plain", "OK");
+    return;
+  }
   int direction = server.arg("direction").toInt();
   int faster = server.arg("faster").toInt();
   if (direction == 1) {
-    rotateDC(IN1_CHANNEL, IN2_CHANNEL, faster);
+    rotateDC(IN1, IN2, faster);
   } else {
-    rotateDC(IN2_CHANNEL, IN1_CHANNEL, faster);
+    rotateDC(IN2, IN1, faster);
   }
   server.send(200, "text/plain", "OK");
 }
@@ -241,8 +251,8 @@ void handle_joy() {
   int x = analogRead(JOY_X);
   int y = analogRead(JOY_Y);
   int button = analogRead(JOY_BUTTON);
-  Serial.println("x= " + x + ",y= " + y + ",button= " + button);
-  server.send(200, "application/json", "{\"x\":" + String(x) + ",\"y\":" + String(y)++ ",\"button\":" + String(button) + "}");
+  Serial.println("x= " + String(x) + ",y= " + String(y) + ",button= " + String(button));
+  server.send(200, "application/json", "{\"x\":" + String(x) + ",\"y\":" + String(y)+ ",\"button\":" + String(button) + "}");
 }
 
 // void handle_servo() {
@@ -252,14 +262,14 @@ void handle_joy() {
 //   server.send(200, "application/json", "{\"message\": \"OK\"}");
 // }
 
-void handle_stepmotor() {
-  int angle = server.arg("angle").toInt();
-  int direction = server.arg("direction").toInt();
-  if (direction == 1) step_degree = -angle;
-  else step_degree = angle;
-  Serial.println("direction: " + String(direction) + ", angle: " + String(angle));
-  server.send(200, "application/json", "{\"message\": \"OK\"}");
-}
+// void handle_stepmotor() {
+//   int angle = server.arg("angle").toInt();
+//   int direction = server.arg("direction").toInt();
+//   if (direction == 1) step_degree = -angle;
+//   else step_degree = angle;
+//   Serial.println("direction: " + String(direction) + ", angle: " + String(angle));
+//   server.send(200, "application/json", "{\"message\": \"OK\"}");
+// }
 
 void loop() {
   server.handleClient();
