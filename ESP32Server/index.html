@@ -26,6 +26,9 @@
     <h2>Thông tin cảm biến khí ga</h2>
     <p id="gas"></p>
 
+    <h2>Thông tin joystick</h2>
+    <p id="joy_stick"></p>
+
     <h2>Điều khiển Servo</h2>
     <input type="number" id="servoAngle" placeholder="Nhập góc (0-180)" />
     <button onclick="controlServo()">Điều khiển Servo</button>
@@ -48,7 +51,7 @@
     <button onclick="stopDC()">Dừng</button>
 
     <script>
-      var espServer = 'http://192.168.137.16'
+      var espServer = 'http://192.168.137.157'
       var dc = 0
       function getHumidityTemperature() {
         fetch(espServer + '/dht')
@@ -91,6 +94,16 @@
           .then((data) => {
             document.getElementById('gas').innerText =
               'Khí gas: ' + data['value']
+          })
+      }
+
+      function getJoystick() {
+        fetch(espServer + '/joy')
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById(
+              'joy_stick'
+            ).innerText = `X: ${data['x']}, Y: ${data['y']}, Button: ${data['button']}`
           })
       }
 
